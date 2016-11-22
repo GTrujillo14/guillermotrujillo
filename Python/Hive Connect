@@ -1,0 +1,13 @@
+import pyhs2
+with pyhs2.connect(host='host_name',
+port=port_num,
+authMechanism="PLAIN",
+user='username',
+password='password',
+database='default') as conn:
+    with conn.cursor() as cur:
+        print cur.getDatabases()
+        cur.execute("select * from table_name")
+        print cur.getSchema()
+        for i in cur.fetch():
+            print i
