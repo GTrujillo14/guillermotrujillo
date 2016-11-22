@@ -1,0 +1,189 @@
+from jira import JIRA
+import math
+import xlsxwriter
+from base64 import b64decode
+from config import *
+import os
+import re
+
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+with open(r'x.txt', 'r') as f:
+    pw = f.readline()
+
+jira = JIRA(basic_auth=(USERNAME, b64decode(pw).decode('ascii')),
+            server='jira_url', max_retries=1)
+
+# Export file location
+fileOut = r'\\share_drive_location'
+
+jql_string = 'project = project_name AND component in (comp_1, comp_2,' \
+             ' comp_3, comp_4) ORDER BY Department ASC'
+
+jira_query = jira.search_issues(jql_string, maxResults=0, fields=
+[
+    'assignee', 'reporter', 'project', 'issuetype', 'summary', 'description', 'created', 'updated', 'timespent',
+    'status', ,'resolution', 'priority', 'environment', 'components', 'customfield_10800', 'customfield_11416',
+    'customfield_10420', 'customfield_10302'
+]
+                                )
+# Create empty list
+jList = []
+
+# Simple regex to just get date from date fields
+pattern = re.compile("(\d+-\d+-\d+)")
+
+# Object used to be used in list
+class ReportObject(object):
+    key = ''
+    assignee = ''
+    reporter = ''
+    project = ''
+    issueType = ''
+    summary = ''
+    description = ''
+    created = ''
+    updated = ''
+    timeSpent = ''
+    status = ''
+    resolution = ''
+    priority = ''
+    environment = ''
+    component = ''
+    dueDate = ''  # 10800
+    department = ''  # 11416
+    epic = ''  # 10420
+    storyPoint = ''  # 10302
+
+    def __init__(self, key, assignee, reporter, project, issueType, summary, description,
+                 created, updated, timeSpent, status, resolution, priority,
+                 environment, component, dueDate, department, epic, storyPoint):
+
+        self.key = key
+        self.assignee = assignee
+        self.reporter = reporter
+        self.project = project
+        self.issueType = issueType
+        self.summary = summary
+        self.description = description
+        self.created = created
+        self.updated = updated
+        self.timeSpent = timeSpent
+        self.status = status
+        self.resolution = resolution
+        self.priority = priority
+        self.environment = environment
+        self.component = component
+        self.dueDate = dueDate
+        self.department = department
+        self.epic = epic
+        self.storyPoint = storyPoint
+
+
+def create_report_object(key, assignee, reporter, project, issueType, summary, description,
+                         created, updated, timeSpent, status, resolution, priority,
+                         environment, component, dueDate, department, epic, storyPoint):
+
+    reportobj = ReportObject(key, assignee, reporter, project, issueType, summary, description,
+                             created, updated, timeSpent, status, resolution, priority,
+                             environment, component, dueDate, department, epic, storyPoint)
+    return reportobj
+
+# Iterate through tickets and create list of objects to put into spreadsheet
+for t in jira_query:
+    ticket = t.raw['fields']
+
+    print(t.self)
+    print(t.key)
+
+    status = ticket['status']['statusCategory']['name']
+    resolution = ticket['resolution']['name']
+    ticketKey = t.key
+
+    try:
+        ticketAssignee = ticket['assignee']['displayName']
+    except TypeError:
+        ticketAssignee = None
+    try:
+        ticketReporter = str(ticket['reporter']['displayName'])
+    except TypeError:
+        ticketReporter = None
+
+    ticketProject = ticket['project']['key']
+    ticketIssueType = ticket['issuetype']['name']
+    ticketSummary = ticket['summary']
+    ticketDescription = (ticket['description'])[:255] if ticket['description'] else None
+    ticketCreated = (re.search(pattern, ticket['created'])).group(0)
+    ticketUpdated = (re.search(pattern, ticket['updated'])).group(0)
+    ticketTimeSpent = math.ceil(ticket['timespent'] / 60) if ticket['timespent'] else None
+    ticketStatus = ticket['status']['name']
+    ticketResolution = ticket['resolution']['name']
+    ticketPriority = ticket['priority']['name'] if ticket['priority'] else None
+    ticketEnvironment = ticket['environment'] if ticket['environment'] else None
+    ticketComponent = ticket['components'][0]['name'] if (len(ticket['components']) is not 0) else None
+    ticketDueDate = ticket['customfield_10800'] if ticket['customfield_10800'] else None
+    ticketDepartment = re.sub('[^0-9a-zA-Z]+', ' ', ticket['customfield_11416']['value']) \
+        if ticket['customfield_11416'] else None
+    ticketEpic = ticket['customfield_10420'] if ticket['customfield_10420'] else None
+    try:
+        ticketStoryPoint = ticket['customfield_10302'] if ticket['customfield_10302'] else None
+    except KeyError:
+        ticketStoryPoint = None
+
+    r = create_report_object(ticketKey, ticketAssignee, ticketReporter, ticketProject, ticketIssueType, ticketSummary,
+                             ticketDescription, ticketCreated, ticketUpdated, ticketTimeSpent, ticketStatus, ticketResolution
+                             ticketPriority, ticketEnvironment, ticketComponent, ticketDueDate, ticketDepartment,
+                             ticketEpic, ticketStoryPoint)
+    jList.append(r)
+
+# Headers for sheet
+headers = ['key', 'assignee', 'reporter', 'project', 'issueType', 'summary', 'description',
+           'created', 'updated', 'timeSpent', 'status','resolution','priority',
+           'environment', 'component', 'dueDate', 'department', 'epic', 'storyPoint']
+
+''' Used when writing as csv
+
+f = csv.writer(open(fileOut, "w", encoding='utf8', newline=''))
+
+# Write headers
+f.writerow(headers)
+
+# Write rows
+for x in jList:
+    f.writerow([x.key, x.assignee, x.reporter, x.project, x.issueType, x.summary, x.description,
+                 x.created, x.updated, x.timeSpent, x.status, x.priority,
+                 x.environment, x.component, x.dueDate, x.department, x.epic, x.storyPoint])
+
+'''
+
+# Create xlsxwriter object
+book = xlsxwriter.Workbook(fileOut)
+
+# Create worksheet
+sheet = book.add_worksheet('JIRA_dump')
+
+# Set values to write the header row
+col = 0
+row = 0
+
+# Write headers
+for h in headers:
+    sheet.write(row, col, h)
+    col += 1
+
+# Set values back to begin writing data
+row = 1
+col = 0
+
+# Write data
+for x in jList:
+    sheet.write_row(row, col,[x.key, x.assignee, x.reporter, x.project, x.issueType, x.summary, x.description,
+        x.created, x.updated, x.timeSpent, x.status, x.resolution, x.priority,
+        x.environment, x.component, x.dueDate, x.department, x.epic, x.storyPoint])
+    row += 1
+
+# Save/Exit
+book.close()
