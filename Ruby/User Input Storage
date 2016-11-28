@@ -1,0 +1,28 @@
+movies = {
+    Pineapple_express: 5,
+    Inglorious_bastards: 4, 
+    This_is_the_end: 3, 
+    Old_School: 4,
+    
+}
+
+puts "Add, update, display, or delete movie title? "
+choice = gets.chomp
+
+case choice
+    when "add"
+        puts "Enter a movie title: "
+        title = gets.chomp
+        puts "Enter movie rating (0-5): "
+        rating = gets.chomp
+        movies[title] = rating
+        puts "#{title} has been added with a rating of #{rating}"
+    when "update"
+        puts "Updated!"
+    when "display"
+        puts "Movies!"
+    when "delete"
+        puts "Deleted!"
+    else
+        puts "Error!"
+end
