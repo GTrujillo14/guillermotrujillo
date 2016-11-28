@@ -1,8 +1,8 @@
 movies = {
-    movie1: 5,
-    movie2: 4, 
-    movie2: 3, 
-    movie4: 4,
+    Pineapple_express: 5,
+    Inglorious_bastards: 4, 
+    This_is_the_end: 3, 
+    Old_School: 4,
     
 }
 
@@ -10,6 +10,8 @@ puts "Add, update, display, or delete movie title? "
 choice = gets.chomp
 
 case choice
+
+#add movie
     when "add"
         puts "Enter a movie title: "
         title = gets.chomp
@@ -21,12 +23,28 @@ case choice
             else
                 puts "#{title} already exists and #{title} not added"
             end
+            
+#update movie
     when "update"
-        puts "Updated!"
+        puts "Enter title to update record: "
+        tile = gets.chomp
+            if movies[title.to_sym] = nil
+                puts "Error: Title is non-existent"
+            else
+                puts "Please enter new rating: "
+                rating = gets.chomp
+                movies[title.to_sym] = rating.to_i
+end
+                
+#display movie
     when "display"
         puts "Movies!"
+        
+#delete movie
     when "delete"
         puts "Deleted!"
+        
+#error handler
     else
         puts "Error!"
 end
