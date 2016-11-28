@@ -1,8 +1,8 @@
 movies = {
-    Pineapple_express: 5,
-    Inglorious_bastards: 4, 
-    This_is_the_end: 3, 
-    Old_School: 4,
+    movie1: 5,
+    movie2: 4, 
+    movie2: 3, 
+    movie4: 4,
     
 }
 
