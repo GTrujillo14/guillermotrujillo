@@ -1,0 +1,68 @@
+Select 
+  Ef.Id Evaluation_Id,
+  Ef.Name Evaluation_Form, 
+  E.Evaluated Monitor_Date,
+  C.Id As Contact_Id,
+  P.Firstname + ' ' + P.Lastname Agent_Name,
+  P.Username Username,
+  P.Activated Agent_Activated_Date,
+  P1.Firstname + ' ' + P1.Lastname Evaluator_Name,
+  E.Totalscore/100 Evaluation_Score,
+  Case When E.Totalscore = 0 Then 'Fail' Else 'Pass' End Autofail,
+  E.Additivescore Additive_Score,
+  C.Localstarttime Call_Date,
+  C.Duration/1000 Call_Duration,
+  T.Name Team,
+  (Case
+    When T.Name = 'BUSINESS_TM' Then 'name'
+    When T.Name = 'COLLECTIONS_TM' Then 'name'
+    When T.Name = 'CREDIT_1_TM' Then 'name'
+    When T.Name = 'CREDIT_2_TM' Then 'name'
+    When T.Name = 'CREDIT_3_TM' Then 'name'
+    When T.Name = 'CREDIT_4_TM' Then 'name'
+    When T.Name = 'CREDIT_5_TM' Then 'name'
+    When T.Name = 'CREDIT_6_TM' Then 'name'
+    When T.Name = 'CREDIT_7_TM' Then 'name'
+    When T.Name = 'CREDIT_8_TM' Then 'name'
+    When T.Name = 'CREDIT_9_TM' Then 'name'
+    When T.Name = 'ELEVATED_SUPPORT_TM' Then 'name'
+    When T.Name = 'FRAUD_TM' Then 'name'
+    When T.Name = 'INVESTOR_SRV_TM' Then 'name'
+      Else null end) Supervisor,
+    (Case When P1.Issupervisor = 'true' Then 'Sup_Eval' Else 'QA_Eval' End) Evaluation_Sup_QA,
+    Cm.Comment Comment,
+    Fail.Autofail_Opsfail Autofail_Opsfail
+  From table1
+    Left Join (Select Id,Name From table2) Ef On E.Evalformfk = Ef.Id
+    Left Join (Select Id, Localstarttime, Duration, Personfk From table3) C On E.Ccrfk = C.Id
+    Left Join (Select Id,Username,Firstname,Lastname,Activated From table4) P On C.Personfk = P.Id
+    Left Join (Select Id,Firstname,Lastname,Issupervisor From table5) P1 On E.Evaluatorfk = P1.Id
+    Left Join (Select Id,Personfk From table6) A On P.Id = A.Personfk
+    Left Join (Select Agentfk,Deactivated,Teamfk from table7) At On A.Id = At.Agentfk
+    Left Join (Select Id,Name from table8) T On At.Teamfk = T.Id
+    Left Join 
+      (Select [Evalfk],Stuff((Select P.Firstname + ' ' + P.Lastname + ' (' + Cast(Convert(Date,[Created]) As Varchar(Max)) + ') ' + Cast([Text] As Varchar(Max)) + ' | '
+        From table9 Eval
+          Left Join table10 On Eval.Personfk = P.Id
+            Where Evalfk = Results.Evalfk
+             For Xml Path(''),Type).value('(./text())[1]','VARCHAR(MAX)'),1,0,'') As Comment
+          From table11 Results
+            Group By Evalfk) Cm On E.Id = Cm.Evalfk
+    Left Join
+      (Select
+        E.Id Eval_Id,
+        C.Id Contact_Id,
+        Max(Case 
+        When E.Totalscore=0 And Q2.Text Like '%**%' And Q3.Label='N' Then 'OpsFail' 
+        When E.Totalscore=0 And Q2.Text Like '%*%' And Q3.Label='N' Then 'AutoFail'
+          Else Null End) Autofail_Opsfail
+       From table12
+        Left Join (Select Id, Localstarttime, Duration, Personfk From table13) C On E.Ccrfk = C.Id
+        Left Join (Select Evalfk,Formquestionfk,Selectedoptionfk From table14) Q On E.Id = Q.Evalfk
+        Left Join (Select Id,Text From table15) Q2 On Q.Formquestionfk = Q2.Id
+        Left Join (Select Id,Label From table16) Q3 On Q.Selectedoptionfk = Q3.Id
+            Group by E.Id,C.Id) Fail On E.Id = Fail.Eval_Id
+    Wheree E.Evaluated  >= Dateadd(Month, Datediff(Month, 0, Dateadd(M, -6, Current_Timestamp)), 0)
+    And Ef.Id Not In (6,11,12,13,15,16,17,18,23)
+    And E.Iscountedscore = 'true'
+    And At.Deactivated > '2999-12-01 00:00:00.0'
