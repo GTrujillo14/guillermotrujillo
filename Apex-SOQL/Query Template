@@ -1,0 +1,2 @@
+FIND {"Closed" OR "Opened" OR "Submitted" OR "Received"} 
+IN ALL FIELDS RETURNING CustomTable__c (Date_Received__c, Close_Date__c, Opportunity__c, Status__c, Condition_Category__c)
