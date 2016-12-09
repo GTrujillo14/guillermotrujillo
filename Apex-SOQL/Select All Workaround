@@ -1,0 +1,167 @@
+Map<String,Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
+
+ List<Schema.SObjectType> sobjects = schemaMap.values();
+        List<Sobject> theObjectResults;
+        Schema.DescribeSObjectResult objDescribe;
+        List<Schema.SObjectField> tempFields;
+        for(Schema.SObjectType objType : sobjects)
+        {
+            objDescribe = objType.getDescribe(); 
+            String sobjectPrefix = objDescribe.getKeyPrefix();
+            if(id != null && sobjectPrefix != null && id.startsWith(sobjectPrefix))
+            {
+                objectType = objDescribe.getLocalName();
+                Map<String, Schema.SObjectField> fieldMap = objDescribe.fields.getMap();
+                tempFields = fieldMap.values();
+                for(Schema.SObjectField sof : tempFields)
+                {
+                    fields.add(sof.getDescribe());
+                } 
+                getAllQuery = buildQueryAllString(fields,objDescribe,id);
+            }
+        }
+        
+        resultObject = Database.query(getAllQuery);
+        
+        for(Schema.DescribeFieldResult dfr : fields)
+        {
+            fieldVals.add(new GenericFieldVO(dfr,resultObject));
+        }
+
+          //Build the Query String
+    private String buildQueryAllString(List<Schema.DescribeFieldResult> queryFields,DescribeSObjectResult obj, String theId)
+    {
+        String query = QUERY_SELECT;
+        for(Schema.DescribeFieldResult dfr : queryFields)
+        {
+            query = query + dfr.getName() + ',';
+        }
+        query = query.subString(0,query.length() - 1);
+        query = query + QUERY_FROM;
+        query = query + obj.getName();
+        query = query + QUERY_WHERE;
+        query = query + theId + '\'';
+        system.debug('Build Query == ' + query);
+        return query;
+    }
+
+    //This class will do all the methods to retrieve schema infomraiton on SObject for apex
+//This will ensure that multiple calls to descibes aren't called so we don't hit gov limits
+public with sharing class SchemaManager 
+{
+    private static Map<String, Schema.SObjectType> sobjectSchemaMap;
+    
+    public static Map<String,Schema.SObjectType> getSchemaMap()
+    {
+        if(sobjectSchemaMap == null)
+        {
+            sobjectSchemaMap = Schema.getGlobalDescribe();
+        }
+        return sobjectSchemaMap;
+    }
+    
+    //Retrieve the specific Schema.SobjectType for a object so we can inspect it
+    public static Schema.SObjectType getObjectSchema(String objectAPIName)
+    {
+        getSchemaMap();
+        Schema.SObjectType aSObjectType = sobjectSchemaMap.get(objectAPIName);
+        return aSobjectType;
+    }
+}
+
+//A simple custom controller that will take any ID as input
+//and query for all fields (up to 90) on the SObject dynamically
+public with sharing class GenericSelectAllController 
+{
+    public List<Schema.DescribeFieldResult> fields {get;set;}
+    public List<GenericFieldVO> fieldVals {get;set;}
+    public String getAllQuery {get;set;}
+    public SObject resultObject {get;set;}
+    public String objectType {get;set;}
+    public String searchId {get;set;}
+    public List<SObject> vals {get;set;}
+    public static final String ERROR_ID_MISSING = 'There was no id passed in the parameters. Id is required.';
+    public static final String QUERY_SELECT = 'select ';
+    public static final String QUERY_FROM = ' from ';
+    public static final String QUERY_WHERE = ' where Id = \'';
+    //Instantiate the controller. If there is no ID then send the error message to the page.
+    public GenericSelectAllController()
+    {
+        init();
+        String id = ApexPages.currentPage().getParameters().get('id');
+        if(id == null || id == '')
+        {
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.FATAL,ERROR_ID_MISSING));
+        }
+        else
+        {
+            searchId = id;
+            processSchemaInfo(id);
+        }
+    }
+    
+    //Process the Schema information
+    //1. Retrieve the global Schema Information
+    //2. Iterate over the SObject Schema Information
+    //2.A Retrieve the SObject Key Prefix and match to the ID passed into page
+    //2.B Describe all the Fields for the SObject
+    //2.C Build a Query String from all the Fields
+    
+    private void processSchemaInfo(String id)
+    {
+        system.debug(id);
+        Map<String,Schema.SObjectType> schemaMap = SchemaManager.getSchemaMap();
+        List<Schema.SObjectType> sobjects = schemaMap.values();
+        List<Sobject> theObjectResults;
+        Schema.DescribeSObjectResult objDescribe;
+        List<Schema.SObjectField> tempFields;
+        for(Schema.SObjectType objType : sobjects)
+        {
+            objDescribe = objType.getDescribe(); 
+            String sobjectPrefix = objDescribe.getKeyPrefix();
+            if(id != null && sobjectPrefix != null && id.startsWith(sobjectPrefix))
+            {
+                objectType = objDescribe.getLocalName();
+                Map<String, Schema.SObjectField> fieldMap = objDescribe.fields.getMap();
+                tempFields = fieldMap.values();
+                for(Schema.SObjectField sof : tempFields)
+                {
+                    fields.add(sof.getDescribe());
+                } 
+                getAllQuery = buildQueryAllString(fields,objDescribe,id);
+            }
+        }
+        
+        resultObject = Database.query(getAllQuery);
+        
+        for(Schema.DescribeFieldResult dfr : fields)
+        {
+            fieldVals.add(new GenericFieldVO(dfr,resultObject));
+        }
+        
+    }
+    
+    private void init()
+    {
+        getAllQuery = '';
+        fields = new List<Schema.DescribeFieldResult>();
+        fieldVals = new List<GenericFieldVO>();
+    }
+    
+    //Build the Query String
+    private String buildQueryAllString(List<Schema.DescribeFieldResult> queryFields,DescribeSObjectResult obj, String theId)
+    {
+        String query = QUERY_SELECT;
+        for(Schema.DescribeFieldResult dfr : queryFields)
+        {
+            query = query + dfr.getName() + ',';
+        }
+        query = query.subString(0,query.length() - 1);
+        query = query + QUERY_FROM;
+        query = query + obj.getName();
+        query = query + QUERY_WHERE;
+        query = query + theId + '\'';
+        system.debug('Build Query == ' + query);
+        return query;
+    }
+}
