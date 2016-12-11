@@ -1,5 +1,6 @@
-from qrcode import *
+#generate simple qr
 
+from qrcode import *
 
 qr = QRCode(version=20, error_correction=ERROR_CORRECT_L)
 qr.add_data("https://www.lenda.com/")
