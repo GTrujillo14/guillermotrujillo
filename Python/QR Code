@@ -4,14 +4,12 @@ from qrcode import *
 
 qr = QRCode(version=20, error_correction=ERROR_CORRECT_L)
 qr.add_data("https://www.lenda.com/")
-qr.make() # Generate the QRCode itself
+qr.make()
 
-# im contains a PIL.Image.Image object
-im = qr.make_image()
+img = qr.make_image()
 
-# To save it
-im.save("filename.png")
+img.save("filename.png")
 
 #quicker generation
 import qrcode
-img = qrcode.make("your awesome data")
+img = qrcode.make("input data")
