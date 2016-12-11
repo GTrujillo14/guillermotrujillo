@@ -11,3 +11,7 @@ im = qr.make_image()
 
 # To save it
 im.save("filename.png")
+
+#quicker generation
+import qrcode
+img = qrcode.make("your awesome data")
