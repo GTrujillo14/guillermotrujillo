@@ -1,0 +1,8 @@
+# need to create json file that stores email and pw for gmail account
+import json
+import gdata.spreadsheet.service
+with open("/Users/guillermotrujillo/Desktop/GoogleAppPW.json") as fh:
+    config = json.load(fh)
+
+# Print the password on the screen
+print config['password']
