@@ -1,5 +1,5 @@
 # must install prior to initializing 
-# gem install rqrcode
+# sudo gem install rqrcode
 
 require 'rqrcode'
 
@@ -12,7 +12,6 @@ string = qrcode.to_s
 
 # png only
 qrcode = RQRCode::QRCode.new("https://www.lenda.com/")
-# With default options specified explicitly
 png = qrcode.as_png(
           resize_gte_to: false,
           resize_exactly_to: false,
