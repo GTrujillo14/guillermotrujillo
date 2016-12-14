@@ -1,0 +1,6 @@
+from selenium import webdriver
+depot = DepotManager.get()
+driver = webdriver.PhantomJS()
+driver.set_window_size(1024, 768)
+driver.get('https://www.lenda.com')
+driver.save_screenshot('lenda.png')
