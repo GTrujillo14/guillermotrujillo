@@ -1,5 +1,11 @@
-# create intercom table in mysql lendaprod
-CREATE TABLE intercom (email VARCHAR(225), 
+-- create database
+create database lendaprod;
+
+-- activate database for production
+use lendaprod;
+
+-- create intercom table in mysql lendaprod
+CREATE TABLE intercom (id BIGINT, email VARCHAR(225), 
     furthest_step VARCHAR(225), 
     first_name VARCHAR(225), 
     last_name VARCHAR(225), 
@@ -9,18 +15,12 @@ CREATE TABLE intercom (email VARCHAR(225),
     loan_amount BIGINT, 
     first_mtg_amt BIGINT, 
     street VARCHAR(225), 
-    admin_br_url VARCHAR(225), 
-    phone VARCHAR(225), 
     lead_status VARCHAR(225), 
     cash_out_amt BIGINT, 
     value_of_home BIGINT, 
     second_mtg BIGINT, 
-    second_mtg_amt BIGINT, 
-    second_mtg_used_to_purchase VARCHAR(225), 
-    sub_second_mtg BIGINT, 
+    second_mtg_amt BIGINT,  
     cltv_ratio BIGINT, 
-    email_bounced_reason VARCHAR(225), 
-    email_bounced_date VARCHAR(225), 
     curr_mtg_rate BIGINT, 
     curr_mtg_term BIGINT, 
     cur_mtg_p_i_pmt BIGINT, 
@@ -36,16 +36,17 @@ CREATE TABLE intercom (email VARCHAR(225),
     p_i_pmt BIGINT, 
     mon_pmt_estimate BIGINT, 
     escrow BIGINT, 
-    cash_to_close BIGINT)
+    cash_to_close VARCHAR(225))
 ;
 
-#import csv file into intercom table in lendaprod
+-- import csv file into intercom table in lendaprod
 load data local infile '/Users/guillermotrujillo/Documents/user_data.csv' 
 into table intercom fields terminated by ',' 
 enclosed by '' 
 lines terminated by '\r\n' 
 ignore 1 lines
-    (email, 
+    (@id, 
+    email, 
     furthest_step, 
     first_name, 
     last_name, 
@@ -55,18 +56,12 @@ ignore 1 lines
     @loan_amount, 
     @first_mtg_amt, 
     street, 
-    admin_br_url, 
-    phone, 
     lead_status, 
     @cash_out_amt, 
     @value_of_home, 
     @second_mtg, 
     @second_mtg_amt, 
-    second_mtg_used_to_purchase, 
-    @sub_second_mtg, 
     @cltv_ratio, 
-    email_bounced_reason, 
-    email_bounced_date, 
     @curr_mtg_rate, 
     @curr_mtg_term, 
     @cur_mtg_p_i_pmt, 
@@ -82,24 +77,25 @@ ignore 1 lines
     @p_i_pmt, 
     @mon_pmt_estimate, 
     @escrow, 
-    @cash_to_close)
-        set ltv_ratio = if(@ltv_ratio="", null, @ltv_ratio),
+    cash_to_close)
+        set id = if(@id="", null, @id),
+            ltv_ratio = if(@ltv_ratio="", null, @ltv_ratio),
             loan_amount = if(@loan_amount="", null, @loan_amount),
             first_mtg_amt = if(@first_mtg_amt="", null, @first_mtg_amt),
+            cash_out_amt = if(@cash_out_amt="", null, @cash_out_amt),
             value_of_home = if(@value_of_home="", null, @value_of_home),
             second_mtg = if(@second_mtg="", null, @second_mtg),
             second_mtg_amt = if(@second_mtg_amt="", null, @second_mtg_amt),
-            sub_second_mtg = if(@sub_second_mtg="", null, @sub_second_mtg),
             cltv_ratio = if(@cltv_ratio="", null, @cltv_ratio),
             curr_mtg_rate = if(@curr_mtg_rate="", null, @curr_mtg_rate),
             curr_mtg_term = if(@curr_mtg_term="", null, @curr_mtg_term),
             cur_mtg_p_i_pmt = if(@cur_mtg_p_i_pmt="", null, @cur_mtg_p_i_pmt),
+            curr_annual_prop_tax = if(@curr_annual_prop_tax="", null, @curr_annual_prop_tax),
             rate_percentage = if(@rate_percentage="", null, @rate_percentage),
             total_closing_costs = if(@total_closing_costs="", null, @total_closing_costs),
             discount_pts = if(@discount_pts="", null, @discount_pts),
             lender_credit = if(@lender_credit="", null, @lender_credit),
             p_i_pmt = if(@p_i_pmt="", null, @p_i_pmt),
             mon_pmt_estimate = if(@mon_pmt_estimate="", null, @mon_pmt_estimate),
-            escrow = if(@escrow="", null, @escrow),
-            cash_to_close = if(@cash_to_close="", null, @cash_to_close)
+            escrow = if(@escrow="", null, @escrow)
         ;
