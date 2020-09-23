@@ -1,1 +1,0 @@
-0 14 * * * /Users/username/file/location/pythonfile.py 1> /dev/null 2>&1 | mail -s "cron output" me@mycompany.com
