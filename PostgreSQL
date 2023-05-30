@@ -75,3 +75,20 @@ FROM
     Orders
 GROUP BY 
     user_id;
+    
+-- Retrieve user names and their corresponding order counts
+SELECT
+    u.name AS user_name,
+    t.order_count
+FROM
+    (
+        SELECT
+            user_id,
+            COUNT(*) AS order_count
+        FROM
+            Orders
+        GROUP BY
+            user_id
+    ) t
+JOIN
+    Users u ON u.user_id = t.user_id;
