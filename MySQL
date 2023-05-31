@@ -1,3 +1,6 @@
+Company: Lenda
+Role: Founding Product Manager
+----------------------------------------------
 -- Calculate the average loan amount
 SELECT AVG(loan_amount) AS average_loan_amount
 FROM mortgages;
