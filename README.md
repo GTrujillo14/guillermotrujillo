@@ -1,6 +1,6 @@
-# SQL Skills Showcase - Senior Product Manager at hopps
+# SQL Skills Showcase 
 
-Welcome to my personal GitHub repository! This repository is dedicated to showcasing my SQL skills, particularly in the context of my role as a Senior Product Manager at hopps.
+Welcome to my personal GitHub repository! This repository is dedicated to showcasing my SQL skills, particularly in the context of my role as a Sr. Product Manager @ hopps, Founding Product Manager @ Lenda, and Senior BizOps Analyst @ LendingClub.
 
 ## Project Overview
 In this repository, you'll find SQL queries and scripts that demonstrate my ability to work with databases, analyze data, and derive meaningful insights. These examples highlight my expertise in leveraging SQL for data-driven decision making, performance optimization, and driving business growth.
