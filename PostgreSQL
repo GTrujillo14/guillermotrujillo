@@ -1,3 +1,6 @@
+Company: hopps
+Role: Senior Product Manager
+----------------------------------------------
 -- Retrieve the total number of active users:
 SELECT COUNT(*) AS active_users_count
 FROM Users;
