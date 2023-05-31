@@ -1,0 +1,165 @@
+Company: LendingClub
+Role: Senior Business Operations Analyst
+----------------------------------------------
+--  Query to Calculate Loan Conversion Rate
+SELECT
+    COUNT(DISTINCT loan_id) AS total_loan_applications,
+    COUNT(DISTINCT CASE WHEN loan_status = 'Approved' THEN loan_id END) AS approved_loans,
+    (COUNT(DISTINCT CASE WHEN loan_status = 'Approved' THEN loan_id END) / COUNT(DISTINCT loan_id)) * 100 AS conversion_rate
+FROM
+    loans;
+
+--  Query to Measure Loan Processing Time
+SELECT
+    loan_id,
+    loan_application_date,
+    loan_approval_date,
+    (loan_approval_date - loan_application_date) AS processing_time
+FROM
+    loans
+WHERE
+    loan_status = 'Approved';
+
+--  Query to Calculate Average Loan Size
+SELECT
+    AVG(loan_amount) AS average_loan_size
+FROM
+    loans;
+
+--  Query to Analyze Customer Satisfaction
+SELECT
+    AVG(customer_satisfaction_score) AS average_customer_satisfaction
+FROM
+    customer_feedback;
+
+-- Query to Evaluate Loan Default Rate
+SELECT
+    COUNT(DISTINCT loan_id) AS total_loans,
+    COUNT(DISTINCT CASE WHEN loan_status = 'Default' THEN loan_id END) AS defaulted_loans,
+    (COUNT(DISTINCT CASE WHEN loan_status = 'Default' THEN loan_id END) / COUNT(DISTINCT loan_id)) * 100 AS default_rate
+FROM
+    loans;
+
+-- Query to Analyze Operational Efficiency
+SELECT
+    AVG(loan_processing_time) AS average_processing_time,
+    AVG(customer_support_response_time) AS average_response_time
+FROM
+    operational_metrics;
+
+-- Query to Calculate Condition Completion Rate
+SELECT
+    COUNT(DISTINCT loan_id) AS total_loan_applications,
+    COUNT(DISTINCT CASE WHEN conditions_completed = 'Yes' THEN loan_id END) AS completed_loans,
+    (COUNT(DISTINCT CASE WHEN conditions_completed = 'Yes' THEN loan_id END) / COUNT(DISTINCT loan_id)) * 100 AS completion_rate
+FROM
+    loan_conditions;
+
+-- Query to Measure Condition Cycle Time
+SELECT
+    condition_name,
+    AVG(DATEDIFF(end_date, start_date)) AS average_cycle_time
+FROM
+    condition_review_logs
+GROUP BY
+    condition_name;
+
+-- Query to Calculate Condition Rejection Rate
+SELECT
+    COUNT(DISTINCT loan_id) AS total_loan_applications,
+    COUNT(DISTINCT CASE WHEN conditions_rejected = 'Yes' THEN loan_id END) AS rejected_loans,
+    (COUNT(DISTINCT CASE WHEN conditions_rejected = 'Yes' THEN loan_id END) / COUNT(DISTINCT loan_id)) * 100 AS rejection_rate
+FROM
+    loan_conditions;
+
+-- Query to Calculate Team Performance Metrics
+SELECT
+    cm.team_name,
+    COUNT(DISTINCT cs.credit_specialist_id) AS total_credit_specialists,
+    COUNT(DISTINCT cr.loan_id) AS total_loans_processed,
+    AVG(cr.condition_completion_rate) AS avg_condition_completion_rate,
+    AVG(cr.cycle_time) AS avg_cycle_time
+FROM
+    credit_specialists cs
+JOIN
+    credit_managers cm ON cs.credit_manager_id = cm.credit_manager_id
+LEFT JOIN
+    credit_reviews cr ON cs.credit_specialist_id = cr.credit_specialist_id
+GROUP BY
+    cm.team_name;
+
+-- Query to Rank Teams Based on Performance
+SELECT
+    team_name,
+    RANK() OVER (ORDER BY avg_condition_completion_rate DESC) AS completion_rate_rank,
+    RANK() OVER (ORDER BY avg_cycle_time ASC) AS cycle_time_rank
+FROM
+    (
+    SELECT
+        cm.team_name,
+        AVG(cr.condition_completion_rate) AS avg_condition_completion_rate,
+        AVG(cr.cycle_time) AS avg_cycle_time
+    FROM
+        credit_specialists cs
+    JOIN
+        credit_managers cm ON cs.credit_manager_id = cm.credit_manager_id
+    LEFT JOIN
+        credit_reviews cr ON cs.credit_specialist_id = cr.credit_specialist_id
+    GROUP BY
+        cm.team_name
+    ) AS team_performance;
+
+-- Query to Retrieve Documents Received by Date
+SELECT
+    DATE(document_received_date) AS received_date,
+    COUNT(*) AS document_count
+FROM
+    documents
+GROUP BY
+    DATE(document_received_date)
+ORDER BY
+    DATE(document_received_date);
+
+-- Query to Calculate Conditions Verified and Ready for Approval
+SELECT
+    COUNT(*) AS conditions_verified_count
+FROM
+    loan_conditions
+WHERE
+    condition_status = 'Verified' AND
+    ready_for_approval = 'Yes';
+
+-- Query to Retrieve Bank Verification Requests
+SELECT
+    COUNT(*) AS bank_verification_requests
+FROM
+    bank_verifications;
+
+-- Query to Retrieve Documents Received by Type
+SELECT
+    document_type,
+    COUNT(*) AS document_count
+FROM
+    documents
+GROUP BY
+    document_type;
+
+-- Query to Calculate Phone Verifications Engaged by Borrowers
+SELECT
+    COUNT(*) AS phone_verifications_engaged
+FROM
+    phone_verifications
+WHERE
+    verification_engaged = 'Yes';
+
+-- Query to Calculate Phone Verification Attempts
+SELECT
+    COUNT(*) AS phone_verification_attempts
+FROM
+    phone_verifications;
+
+-- Query to Calculate Employment Verification Attempts
+SELECT
+    COUNT(*) AS employment_verification_attempts
+FROM
+    employment_verifications;
