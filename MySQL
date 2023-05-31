@@ -1,0 +1,88 @@
+-- Calculate the average loan amount
+SELECT AVG(loan_amount) AS average_loan_amount
+FROM mortgages;
+
+-- Retrieve the top 5 investors by loan purchasing volume
+SELECT investor_name, COUNT(*) AS loan_count
+FROM investors
+GROUP BY investor_name
+ORDER BY loan_count DESC
+LIMIT 5;
+
+-- Calculate the total loan origination volume by year
+SELECT YEAR(origination_date) AS origination_year, SUM(loan_amount) AS total_loan_amount
+FROM mortgages
+GROUP BY YEAR(origination_date)
+ORDER BY origination_year;
+
+-- Retrieve the top 10 borrowers with the highest loan amounts
+SELECT borrower_name, loan_amount
+FROM mortgages
+ORDER BY loan_amount DESC
+LIMIT 10;
+
+-- Calculate the average interest rate for loans with a loan amount above a certain threshold
+SELECT AVG(interest_rate) AS average_interest_rate
+FROM mortgages
+WHERE loan_amount > 500000; 
+
+-- Retrieve loan products with the highest loan origination volume
+SELECT product_name, loan_count
+FROM (
+    SELECT product_name, COUNT(*) AS loan_count
+    FROM loans
+    GROUP BY product_name
+    ORDER BY loan_count DESC
+    LIMIT 5
+) AS top_loan_products;
+
+-- Get loan products with the lowest average interest rate
+SELECT product_name, average_interest_rate
+FROM (
+    SELECT product_name, AVG(interest_rate) AS average_interest_rate
+    FROM loans
+    GROUP BY product_name
+    ORDER BY average_interest_rate ASC
+    LIMIT 5
+) AS top_loan_products;
+
+-- Retrieve loan products with the highest loan amount
+SELECT product_name, MAX(loan_amount) AS max_loan_amount
+FROM loans
+GROUP BY product_name
+ORDER BY max_loan_amount DESC
+LIMIT 5;
+
+-- Calculate the average fee collected for each loan size range
+SELECT
+    CASE
+        WHEN loan_amount <= 100000 THEN '<= 100K'
+        WHEN loan_amount <= 500000 THEN '100K - 500K'
+        WHEN loan_amount <= 1000000 THEN '500K - 1M'
+        ELSE '> 1M'
+    END AS loan_size_range,
+    AVG(fee_collected) AS average_fee
+FROM
+    loans
+GROUP BY
+    loan_size_range;
+
+-- Calculate the average fee collected for each specific loan size
+SELECT
+    loan_amount,
+    AVG(fee_collected) AS average_fee
+FROM
+    loans
+GROUP BY
+    loan_amount;
+
+-- Calculate the average fee collected for loan sizes with a specific range
+SELECT
+    loan_amount,
+    AVG(fee_collected) AS average_fee
+FROM
+    loans
+WHERE
+    loan_amount BETWEEN 100000 AND 500000 -- Specify the desired loan size range
+GROUP BY
+    loan_amount;
