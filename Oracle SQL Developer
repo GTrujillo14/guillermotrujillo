@@ -163,3 +163,45 @@ SELECT
     COUNT(*) AS employment_verification_attempts
 FROM
     employment_verifications;
+
+-- Create a View with aggregated metrics
+CREATE VIEW loan_summary_view AS
+SELECT
+    l.loan_id,
+    l.borrower_name,
+    l.loan_amount,
+    lc.condition_status,
+    lc.ready_for_approval,
+    d.document_type,
+    pv.verification_engaged,
+    pv.attempts AS phone_verification_attempts
+FROM
+    loans l
+LEFT JOIN
+    loan_conditions lc ON l.loan_id = lc.loan_id
+LEFT JOIN
+    documents d ON l.loan_id = d.loan_id
+LEFT JOIN
+    phone_verifications pv ON l.loan_id = pv.loan_id;
+
+-- Create a Procedure to schedule when query runs
+CREATE OR REPLACE PROCEDURE execute_query_at_specific_time
+IS
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name        => 'execute_query_job',
+    job_type        => 'PLSQL_BLOCK',
+    job_action      => 'BEGIN
+                          -- Your SQL query here
+                          -- Replace with your actual query
+                          SELECT * FROM your_table;
+                        END;',
+    start_date      => SYSTIMESTAMP + INTERVAL '1' HOUR, -- Specify the desired start time
+    repeat_interval => NULL, -- Set to NULL for one-time execution
+    enabled         => TRUE
+  );
+END;
+/
+
+-- To execute the procedure and schedule the job
+EXECUTE execute_query_at_specific_time;
