@@ -1,0 +1,58 @@
+// This project focused on automating contract creation for the Northern Nights Festival. The idea behind this was to generate contracts in Google Docs from a Google source spreadsheet.
+
+// This function creates a new menu item on the source spreadsheet that will run the script
+function onOpen () { 
+  const ui = SpreadsheetApp.getUi();
+  const menu = ui.createMenu(`AutoFill Docs`);
+  menu.addItem(`Create New Docs`,`createNewGoogleDocs`)
+  menu.addToUi();
+}
+
+function createNewGoogleDocs () {
+  // Replace the getFileById with the appropriate Google Doc Contract file
+  const googleDocTemplate = DriveApp.getFileById(`enter_file_id`);
+  // Replace the getFolderById with the appropriate Google Drive Folder you want the docs to be placed
+  const destinationFolder = DriveApp.getFolderById(`enter_folder_id`)
+    const sheet = SpreadsheetApp
+    .getActiveSpreadsheet()
+    // This is actually the Tab name from the source spreadsheet, not the actual spreadsheet name
+    .getSheetByName(`enter_tab_name`)
+      const rows = sheet.getDataRange().getValues();
+
+  // Setup currency formatter for the hourly and total compensation figures
+  const currencyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+        rows.forEach(function(row, index){
+    if (index === 0) return; // Skip header row
+    if (!row[5]) return; // Skip if Total Compensation is empty
+
+    const copy = googleDocTemplate.makeCopy(`${row[1]}, ${row[0]} Employee Details` , destinationFolder)
+    const doc = DocumentApp.openById(copy.getId())
+    const body = doc.getBody();
+
+    // Format hourly and total compensation fields as currency
+    const formattedHourlyCompensation = currencyFormatter.format(row[4]);
+    const formattedTotalCompensation = currencyFormatter.format(row[5]);
+      
+    // Replace placeholders with actual data from the Google Doc Template and Google Source Sheet
+    body.replaceText(`{{Full Name}}`, row[0]);
+    body.replaceText(`{{Email}}`, row[1]);
+    body.replaceText(`{{Title}}`, row[2]);
+    body.replaceText(`{{Mobile Number}}`, row[3]);
+    body.replaceText('{{Compensation per hour}}', formattedHourlyCompensation);
+    body.replaceText('{{Total Compensation}}', formattedTotalCompensation);
+
+        doc.saveAndClose();
+    const url = doc.getUrl();
+// Set the URL in the 'Contract Link' column, ensuring it does not overwrite other data    
+if (sheet.getRange(index + 1, 7).isBlank()) {
+      sheet.getRange(index + 1, 7).setValue(url);
+    }
+})
+
+}
