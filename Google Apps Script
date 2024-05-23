@@ -1,25 +1,16 @@
-// This project focused on automating contract creation for the Northern Nights Festival. The idea behind this was to generate contracts in Google Docs from a Google source spreadsheet.
-
-// This function creates a new menu item on the source spreadsheet that will run the script
-function onOpen () { 
+function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  const menu = ui.createMenu(`AutoFill Docs`);
-  menu.addItem(`Create New Docs`,`createNewGoogleDocs`)
+  const menu = ui.createMenu('AutoFill Docs');
+  menu.addItem('Create New Docs', 'createNewGoogleDocs');
   menu.addToUi();
 }
 
-function createNewGoogleDocs () {
-  // Replace the getFileById with the appropriate Google Doc Contract file
-  const googleDocTemplate = DriveApp.getFileById(`enter_file_id`);
-  // Replace the getFolderById with the appropriate Google Drive Folder you want the docs to be placed
-  const destinationFolder = DriveApp.getFolderById(`enter_folder_id`)
-    const sheet = SpreadsheetApp
-    .getActiveSpreadsheet()
-    // This is actually the Tab name from the source spreadsheet, not the actual spreadsheet name
-    .getSheetByName(`enter_tab_name`)
-      const rows = sheet.getDataRange().getValues();
+function createNewGoogleDocs() {
+  const googleDocTemplate = DriveApp.getFileById('15y5mhqCoQKT4kPpNCA09oe-AWYJOqw5ICc6-Y1LG-7c');
+  const destinationFolder = DriveApp.getFolderById('15HnnnmkTLdVAOI6nukq_DcJRJDqhIrsi');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('IC Contract Builder');
+  const rows = sheet.getDataRange().getValues();
 
-  // Setup currency formatter for the hourly and total compensation figures
   const currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -27,32 +18,78 @@ function createNewGoogleDocs () {
     maximumFractionDigits: 2
   });
 
-        rows.forEach(function(row, index){
-    if (index === 0) return; // Skip header row
-    if (!row[5]) return; // Skip if Total Compensation is empty
+  const dateFormatter = new Intl.DateTimeFormat('en-US');
+  const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    const copy = googleDocTemplate.makeCopy(`${row[1]}, ${row[0]} Employee Details` , destinationFolder)
-    const doc = DocumentApp.openById(copy.getId())
+  rows.forEach(function(row, index) {
+    if (index === 0) return; // Skip header row
+
+    const copy = googleDocTemplate.makeCopy(`${row[23]} - NN24 IC Contract`, destinationFolder); // Column X is 23 in zero-based index
+    const doc = DocumentApp.openById(copy.getId());
     const body = doc.getBody();
 
-    // Format hourly and total compensation fields as currency
-    const formattedHourlyCompensation = currencyFormatter.format(row[4]);
-    const formattedTotalCompensation = currencyFormatter.format(row[5]);
-      
-    // Replace placeholders with actual data from the Google Doc Template and Google Source Sheet
-    body.replaceText(`{{Full Name}}`, row[0]);
-    body.replaceText(`{{Email}}`, row[1]);
-    body.replaceText(`{{Title}}`, row[2]);
-    body.replaceText(`{{Mobile Number}}`, row[3]);
-    body.replaceText('{{Compensation per hour}}', formattedHourlyCompensation);
-    body.replaceText('{{Total Compensation}}', formattedTotalCompensation);
-
-        doc.saveAndClose();
-    const url = doc.getUrl();
-// Set the URL in the 'Contract Link' column, ensuring it does not overwrite other data    
-if (sheet.getRange(index + 1, 7).isBlank()) {
-      sheet.getRange(index + 1, 7).setValue(url);
+    // Helper function to format dates safely
+    function formatDate(dateValue) {
+      if (dateValue && !isNaN(new Date(dateValue))) {
+        return dateFormatter.format(new Date(dateValue));
+      } else {
+        return '';
+      }
     }
-})
 
+   // Helper function to format times safely
+    function formatTime(timeValue) {
+      if (timeValue && !isNaN(new Date(timeValue))) {
+        return timeFormatter.format(new Date(timeValue));
+      } else {
+        return '';
+      }
+    }
+
+    // Format and replace placeholders
+    const formattedContractDate = formatDate(row[4]); // Column E
+    const formattedStartDate = formatDate(row[7]); // Column H
+    const formattedEndDate = formatDate(row[8]); // Column I
+    const formattedFirstPaymentDueDate = formatDate(row[11]); // Column L
+    const formattedFinalPaymentDueDate = formatDate(row[13]); // Column N
+    const formattedArrivalDate = formatDate(row[26]); // Column AA
+    const formattedDepartureDate = formatDate(row[28]); // Column AC
+    const formattedArrivalTime = formatTime(row[27]); // Column AB
+    const formattedDepartureTime = formatTime(row[29]); // Column AD
+    const formattedFirstPaymentAmount = currencyFormatter.format(row[12]); // Column M
+    const formattedFinalPaymentAmount = currencyFormatter.format(row[14]); // Column O
+    const formattedTotalContractAmount = currencyFormatter.format(row[15]); // Column P
+
+    body.replaceText('{{Date}}', formattedContractDate);
+    body.replaceText('{{Name}}', row[23]); // Column X
+    body.replaceText('{{Address Field 1}}', row[2]); // Column C
+    body.replaceText('{{Address Field 2}}', row[3]); // Column D
+    body.replaceText('{{Title}}', row[10]); // Column K
+    body.replaceText('{{Reports To}}', row[9]); // Column J
+    body.replaceText('{{Dept}}', row[18]); // Column S
+    body.replaceText('{{Group}}', row[19]); // Column T
+    body.replaceText('{{Area}}', row[20]); // Column U
+    body.replaceText('{{Start Date}}', formattedStartDate); // Column H
+    body.replaceText('{{End Date}}', formattedEndDate); // Column I
+    body.replaceText('{{First Payment Due Date}}', formattedFirstPaymentDueDate); // Column L
+    body.replaceText('{{First Payment Amount}}', formattedFirstPaymentAmount); // Column M
+    body.replaceText('{{Final Payment Due Date}}', formattedFinalPaymentDueDate); // Column N
+    body.replaceText('{{Final Payment Amount}}', formattedFinalPaymentAmount); // Column O
+    body.replaceText('{{Total Contract Amount}}', formattedTotalContractAmount); // Column P
+    body.replaceText('{{Job Overview}}', row[24]); // Column Y
+    body.replaceText('{{Responsibilities and Duties}}', row[25]); // Column Z
+    body.replaceText('{{Arrival Date}}', formattedArrivalDate); // Column AA
+    body.replaceText('{{Arrival Time}}', formattedArrivalTime); // Column AB
+    body.replaceText('{{Departure Date}}', formattedDepartureDate); // Column AC
+    body.replaceText('{{Departure Time}}', formattedDepartureTime); // Column AD
+    body.replaceText('{{Notes}}', row[30]); // Column AE
+
+    doc.saveAndClose();
+    const url = doc.getUrl();
+
+    // Set the URL in the 'Contract Link' column, which is now the 1st column (Column A)
+    if (sheet.getRange(index + 1, 1).isBlank()) { // Column A is the 1st column
+      sheet.getRange(index + 1, 1).setValue(url);
+    }
+  });
 }
