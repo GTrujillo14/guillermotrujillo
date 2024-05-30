@@ -6,9 +6,9 @@ function onOpen() {
 }
 
 function createNewGoogleDocs() {
-  const googleDocTemplate = DriveApp.getFileById('15y5mhqCoQKT4kPpNCA09oe-AWYJOqw5ICc6-Y1LG-7c');
-  const destinationFolder = DriveApp.getFolderById('1lFA58_2L2Y7PwvpppK-3jDNutni-I2Si');
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('IC Contract Builder');
+  const googleDocTemplate = DriveApp.getFileById('enter_doc_id');
+  const destinationFolder = DriveApp.getFolderById('enter_folder_id');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('enter_tab_name');
   const rows = sheet.getDataRange().getValues();
 
   const currencyFormatter = new Intl.NumberFormat('en-US', {
