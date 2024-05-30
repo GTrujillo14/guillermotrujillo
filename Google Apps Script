@@ -6,9 +6,9 @@ function onOpen() {
 }
 
 function createNewGoogleDocs() {
-  const googleDocTemplate = DriveApp.getFileById('enter_file_id');
-  const destinationFolder = DriveApp.getFolderById('enter_folder_id');
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('enter_ss_tab_name');
+  const googleDocTemplate = DriveApp.getFileById('15y5mhqCoQKT4kPpNCA09oe-AWYJOqw5ICc6-Y1LG-7c');
+  const destinationFolder = DriveApp.getFolderById('1lFA58_2L2Y7PwvpppK-3jDNutni-I2Si');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('IC Contract Builder');
   const rows = sheet.getDataRange().getValues();
 
   const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -19,32 +19,32 @@ function createNewGoogleDocs() {
   });
 
   const dateFormatter = new Intl.DateTimeFormat('en-US');
-  const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' });
+
+ // Helper function to format dates safely
+  function formatDate(dateValue) {
+    if (dateValue && !isNaN(new Date(dateValue))) {
+      return dateFormatter.format(new Date(dateValue));
+    } else {
+      return '';
+    }
+  }
 
   rows.forEach(function(row, index) {
     if (index === 0) return; // Skip header row
 
-    const copy = googleDocTemplate.makeCopy(`${row[23]} - NN24 IC Contract`, destinationFolder); // Column X is 23 in zero-based index
+    const contractLink = row[0]; // Column A
+    const status = row[29]; // Column AD (30th column, zero-based index)
+
+    // Only generate if status is "Needed" and contract link is empty
+    if (status !== "Needed" || contractLink) return;
+
+    const contractorName = row[23]; // Column X
+    if (!contractorName || contractorName === "Name of Contractor") return; // Skip if name is missing or is the header
+
+    const copy = googleDocTemplate.makeCopy(`${contractorName} - NN24 IC Contract`, destinationFolder);
     const doc = DocumentApp.openById(copy.getId());
     const body = doc.getBody();
 
-    // Helper function to format dates safely
-    function formatDate(dateValue) {
-      if (dateValue && !isNaN(new Date(dateValue))) {
-        return dateFormatter.format(new Date(dateValue));
-      } else {
-        return '';
-      }
-    }
-
-   // Helper function to format times safely
-    function formatTime(timeValue) {
-      if (timeValue && !isNaN(new Date(timeValue))) {
-        return timeFormatter.format(new Date(timeValue));
-      } else {
-        return '';
-      }
-    }
 
     // Format and replace placeholders
     const formattedContractDate = formatDate(row[4]); // Column E
@@ -53,15 +53,13 @@ function createNewGoogleDocs() {
     const formattedFirstPaymentDueDate = formatDate(row[11]); // Column L
     const formattedFinalPaymentDueDate = formatDate(row[13]); // Column N
     const formattedArrivalDate = formatDate(row[26]); // Column AA
-    const formattedDepartureDate = formatDate(row[28]); // Column AC
-    const formattedArrivalTime = formatTime(row[27]); // Column AB
-    const formattedDepartureTime = formatTime(row[29]); // Column AD
+    const formattedDepartureDate = formatDate(row[27]); // Column AB
     const formattedFirstPaymentAmount = currencyFormatter.format(row[12]); // Column M
     const formattedFinalPaymentAmount = currencyFormatter.format(row[14]); // Column O
     const formattedTotalContractAmount = currencyFormatter.format(row[15]); // Column P
 
     body.replaceText('{{Date}}', formattedContractDate);
-    body.replaceText('{{Name}}', row[23]); // Column X
+    body.replaceText('{{Name}}', contractorName); // Column X
     body.replaceText('{{Address Field 1}}', row[2]); // Column C
     body.replaceText('{{Address Field 2}}', row[3]); // Column D
     body.replaceText('{{Title}}', row[10]); // Column K
@@ -79,15 +77,13 @@ function createNewGoogleDocs() {
     body.replaceText('{{Job Overview}}', row[24]); // Column Y
     body.replaceText('{{Responsibilities and Duties}}', row[25]); // Column Z
     body.replaceText('{{Arrival Date}}', formattedArrivalDate); // Column AA
-    body.replaceText('{{Arrival Time}}', formattedArrivalTime); // Column AB
-    body.replaceText('{{Departure Date}}', formattedDepartureDate); // Column AC
-    body.replaceText('{{Departure Time}}', formattedDepartureTime); // Column AD
-    body.replaceText('{{Notes}}', row[30]); // Column AE
+    body.replaceText('{{Departure Date}}', formattedDepartureDate); // Column AB
+    body.replaceText('{{Notes}}', row[28]); // Column AC
 
     doc.saveAndClose();
     const url = doc.getUrl();
 
-    // Set the URL in the 'Contract Link' column, which is now the 1st column (Column A)
+    // Set the URL in the 'Contract Link' column only if it is blank
     if (sheet.getRange(index + 1, 1).isBlank()) { // Column A is the 1st column
       sheet.getRange(index + 1, 1).setValue(url);
     }
