@@ -1,3 +1,5 @@
+// The following Google Apps Script was developed for the Nothern Nights Festival team to automoate contract creation for personnel
+
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('AutoFill Docs');
