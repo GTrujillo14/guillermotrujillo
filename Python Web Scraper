@@ -1,3 +1,120 @@
+# Scrape events from AYSO website
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import pandas as pd
+import time
+
+# Initialize Selenium WebDriver
+options = webdriver.ChromeOptions()
+# Uncomment the following line to run in headless mode
+options.add_argument('--headless')
+driver = webdriver.Chrome(options=options)
+
+# Navigate to the website
+url = "https://www.aysonational.org/Default.aspx?tabid=961582"
+driver.get(url)
+
+# Wait for the page to load
+wait = WebDriverWait(driver, 20)
+
+# Data storage for exporting to CSV
+club_data = []
+
+try:
+    # Click the "Search" button
+    print("Clicking the 'Search' button...")
+    search_button = wait.until(EC.element_to_be_clickable((By.ID, "searchButton")))
+    search_button.click()
+
+    # Wait for results to load
+    print("Waiting for results to load...")
+    wait.until(EC.presence_of_element_located((By.ID, "locationList")))
+
+    # Locate all club entries in the table
+    print("Scraping club details...")
+    clubs_table = wait.until(EC.presence_of_element_located((By.ID, "locationList")))
+    club_rows = clubs_table.find_elements(By.TAG_NAME, "tr")  # Get all rows in the table
+
+    # Initialize a set to track processed club names
+    processed_clubs = set()
+
+    # Iterate through each club entry
+    for i, row in enumerate(club_rows, start=1):  # Adjust number of rows as needed
+        try:
+            # Extract the club name
+            club_name = row.find_element(By.CLASS_NAME, "title-text").text if row.find_elements(By.CLASS_NAME, "title-text") else "N/A"
+
+            # Get the count of entries for the club
+            count = (
+                int(row.find_element(By.CLASS_NAME, "count-text").text)
+                if row.find_elements(By.CLASS_NAME, "count-text")
+                else 1
+            )
+
+            # Skip if the club name is already processed or "N/A"
+            if club_name in processed_clubs or club_name == "N/A":
+                continue
+
+            # Mark the club as processed
+            processed_clubs.add(club_name)
+
+            # Extract other details
+            website = row.find_element(By.CLASS_NAME, "title-link").get_attribute("href") if row.find_elements(By.CLASS_NAME, "title-link") else "N/A"
+            address = (
+                row.find_element(By.XPATH, ".//div[@data-bind='html: Address']").get_attribute("innerHTML").replace("<br>", ", ")
+                if row.find_elements(By.XPATH, ".//div[@data-bind='html: Address']")
+                else "N/A"
+            )
+            email = (
+                row.find_element(By.XPATH, ".//div[@data-bind='text: Email']").text
+                if row.find_elements(By.XPATH, ".//div[@data-bind='text: Email']")
+                else "N/A"
+            )
+            phone = (
+                row.find_element(By.XPATH, ".//div[@data-bind='text: Phone']").text
+                if row.find_elements(By.XPATH, ".//div[@data-bind='text: Phone']")
+                else "N/A"
+            )
+
+            # Print details
+            print(f"Club {len(processed_clubs)} (Count: {count}):")
+            print(f"Name: {club_name}")
+            print(f"Website: {website}")
+            print(f"Address: {address}")
+            print(f"Email: {email}")
+            print(f"Phone: {phone}")
+            print("-" * 40)
+
+            # Add to the data list
+            club_data.append({
+                "Name": club_name,
+                "Website": website,
+                "Address": address,
+                "Email": email,
+                "Phone": phone
+            })
+
+        except Exception as e:
+            print(f"Error extracting details for club {i}: {e}")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+finally:
+    # Quit the browser
+    driver.quit()
+
+# Export to CSV
+if club_data:
+    df = pd.DataFrame(club_data)
+    output_file = "ayso_clubs.csv"
+    df.to_csv(output_file, index=False)
+    print(f"Data exported to '{output_file}'.")
+else:
+    print("No data to export.")
+
 # Scrape Event URLs, Name, and Location from Raceroster website; Web scraper part 1
 import requests
 from tabulate import tabulate
