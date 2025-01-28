@@ -1,3 +1,115 @@
+# Scrape wrestling coach info 
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import pandas as pd
+import time
+
+# Base URL
+url = "https://www.themat.com/membership/athletes/find-a-club"
+
+# Initialize Selenium WebDriver
+options = webdriver.ChromeOptions()
+# Uncomment the following line to run in headless mode
+options.add_argument('--headless')
+driver = webdriver.Chrome(options=options)
+wait = WebDriverWait(driver, 20)
+
+# List to store state contact information
+data = []
+
+try:
+    # Navigate to the main page
+    driver.get(url)
+    print("Page loaded. Switching to the iframe...")
+
+    # Switch to the iframe
+    iframe = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "css-jt36ug")))
+    driver.switch_to.frame(iframe)
+
+    # Retrieve state links
+    print("Extracting state links...")
+    state_links = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "ul.states a")))
+    state_links_data = [(state.text, state.get_attribute("href")) for state in state_links]
+    print(f"Found {len(state_links_data)} states.")
+
+    # Iterate through every state
+    for i, (state_name, state_url) in enumerate(state_links_data, start=1):
+        print(f"\nProcessing State {i}/{len(state_links_data)}: {state_name} ({state_url})")
+
+        # Navigate to the state page
+        driver.get(state_url)
+        time.sleep(5)  # Allow time for the state page to load
+
+        # Extract State Association Contact Information
+        try:
+            contact_info_section = wait.until(
+                EC.presence_of_element_located((By.XPATH, "//h5[contains(text(), 'State Association Contact Information')]/.."))
+            )
+            # Remove the duplicate header text
+            contact_info = "\n".join(contact_info_section.text.split("\n")[1:])
+        except Exception:
+            contact_info = "N/A"
+            print(f"No State Association Contact Information found for {state_name}.")
+
+        # Extract State Director Information
+        try:
+            state_director_section = driver.find_element(By.XPATH, "//h5[contains(text(), 'State Director')]/following-sibling::p")
+            state_director_info = state_director_section.text
+        except Exception:
+            state_director_info = "N/A"
+            print(f"No State Director Information found for {state_name}.")
+
+        # Extract Membership Contact Information
+        try:
+            membership_contact_section = driver.find_element(By.XPATH, "//h5[contains(text(), 'Membership Contact')]/following-sibling::p")
+            membership_contact_info = membership_contact_section.text
+        except Exception:
+            membership_contact_info = "N/A"
+            print(f"No Membership Contact Information found for {state_name}.")
+
+        # Extract SafeSport Coordinator Contact Information
+        try:
+            safesport_contact_section = driver.find_element(By.XPATH, "//h5[contains(text(), 'SafeSport Coordinator Contact')]/following-sibling::p")
+            safesport_contact_info = safesport_contact_section.text
+        except Exception:
+            safesport_contact_info = "N/A"
+            print(f"No SafeSport Coordinator Contact Information found for {state_name}.")
+
+        # Append the data to the list
+        data.append({
+            "State": state_name,
+            "State Association Contact": contact_info,
+            "State Director": state_director_info,
+            "Membership Contact": membership_contact_info,
+            "SafeSport Coordinator Contact": safesport_contact_info,
+        })
+
+        # Navigate back to the main state list
+        driver.get(url)
+        time.sleep(5)  # Allow time for the main page to reload
+
+        # Re-enter the iframe
+        iframe = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "css-jt36ug")))
+        driver.switch_to.frame(iframe)
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+finally:
+    # Quit the browser
+    driver.quit()
+
+    # Save the data to a CSV file
+    if data:
+        print("Saving data to 'state_contact_information.csv'...")
+        df = pd.DataFrame(data)
+        df.to_csv("state_contact_information.csv", index=False)
+        print("Data saved successfully!")
+    else:
+        print("No data collected.")
+
 # Scrape events from AYSO website
 from selenium import webdriver
 from selenium.webdriver.common.by import By
