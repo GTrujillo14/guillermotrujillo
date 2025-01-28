@@ -312,13 +312,13 @@ def save_to_spreadsheet(data, output_file):
 
 if __name__ == '__main__':
     url_counter = 0
-    user_name = "gtrujillo"  # Edit to your PC User.
+    user_name = "username"  # Edit to your PC User.
     data_length = len(data)
 
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless=new')
     browser = webdriver.Chrome(options=chrome_options)
-    output_file = f"/Users/gtrujillo/Documents/event_contacts.xlsx"
+    output_file = f"/Users/username/Documents/event_contacts.xlsx"
     event_contacts = []
 
     for title, url in data:
